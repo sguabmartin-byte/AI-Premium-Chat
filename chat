@@ -1,0 +1,64 @@
+app/chat/page.tsx
+"use client";
+
+import { useState } from "react";
+
+export default function ChatPage() {
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [input, setInput] = useState("");
+
+  async function sendMessage() {
+    if (!input) return;
+
+    // Lägg till mitt eget meddelande i listan
+    const newMessages = [...messages, { role: "user", content: input }];
+    setMessages(newMessages);
+    setInput("");
+
+    // Skicka till vårt API
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: newMessages }),
+    });
+
+    const data = await res.json();
+
+    // Lägg till AI-svaret
+    setMessages([...newMessages, { role: "assistant", content: data.reply }]);
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-100">
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow p-4 flex flex-col space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-2">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              className={`p-2 rounded-lg ${
+                m.role === "user" ? "bg-blue-100 text-right" : "bg-gray-200 text-left"
+              }`}
+            >
+              {m.content}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex space-x-2">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="flex-1 border rounded-lg p-2"
+            placeholder="Skriv ett meddelande..."
+          />
+          <button
+            onClick={sendMessage}
+            className="bg-blue-500 text-white rounded-lg px-4"
+          >
+            Skicka
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
