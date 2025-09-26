@@ -1,0 +1,53 @@
+pages/index.js
+import { useState } from "react";
+
+export default function Home() {
+  const [message, setMessage] = useState("");
+  const [chat, setChat] = useState([]);
+  const [paid, setPaid] = useState(false);
+
+  const sendMessage = async () => {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    const data = await res.json();
+    setChat([...chat, { role: "user", content: message }, { role: "ai", content: data.reply }]);
+    setMessage("");
+  };
+
+  const goToCheckout = async () => {
+    const res = await fetch("/api/create-checkout-session", { method: "POST" });
+    const data = await res.json();
+    window.location.href = data.url;
+  };
+
+  return (
+    <div style={{ maxWidth: "600px", margin: "auto", padding: "2rem" }}>
+      <h1>AI Premium Chat</h1>
+      {!paid ? (
+        <>
+          <p>För att chatta obegränsat, klicka på knappen nedan:</p>
+          <button onClick={goToCheckout} style={{ padding: "10px 20px" }}>
+            Betala med Stripe
+          </button>
+        </>
+      ) : (
+        <>
+          <div style={{ border: "1px solid #ccc", padding: "1rem", minHeight: "300px" }}>
+            {chat.map((m, i) => (
+              <p key={i}><b>{m.role}:</b> {m.content}</p>
+            ))}
+          </div>
+          <input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Skriv ett meddelande..."
+          />
+          <button onClick={sendMessage}>Skicka</button>
+        </>
+      )}
+    </div>
+  );
+}
